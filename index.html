@@ -12,7 +12,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
         :root {
@@ -152,9 +151,8 @@
                         <input type="password" id="apiKeyInput" class="w-full bg-black retro-border px-2 py-2 outline-none text-xl focus:bg-white focus:text-black transition-colors" placeholder="AIzaSy...">
                     </div>
                     <div>
-                        <label class="block text-lg text-white mb-1 uppercase tracking-widest">Google OAuth Client ID</label>
-                        <input type="text" id="clientIdInput" class="w-full bg-black retro-border px-2 py-2 outline-none text-xl focus:bg-white focus:text-black transition-colors" placeholder="123456...apps.googleusercontent.com">
-                        <p class="text-sm mt-1 text-gray-400">Required for direct Google Calendar Sync.</p>
+                        <label class="block text-lg text-white mb-1 uppercase tracking-widest text-gray-500">Google OAuth Client ID (HARDCODED)</label>
+                        <input type="text" id="clientIdInput" class="w-full bg-gray-900 retro-border px-2 py-2 outline-none text-xl text-gray-500" value="792161313324-3t15r3odagp2247rfgvdi90dn8o1ekm3.apps.googleusercontent.com" readonly>
                     </div>
                     <button id="saveSettingsBtn" class="w-full bg-black text-white uppercase text-2xl py-2 retro-border retro-shadow hover:bg-white hover:text-black active:translate-y-1 active:translate-x-1 active:shadow-none mt-2">
                         SAVE_CONFIG
@@ -194,8 +192,10 @@
         let habitData = JSON.parse(localStorage.getItem('sbot_habits')) || {};
         let pendingImageData = null; 
         let pendingImageMime = null;
-        let googleAccessToken = null;
-        let tokenClient = null;
+        let googleAccessToken = localStorage.getItem('google_access_token') || null;
+        
+        // Hardcoded Client ID to bypass mobile caching and typing errors
+        const HARDCODED_CLIENT_ID = "792161313324-3t15r3odagp2247rfgvdi90dn8o1ekm3.apps.googleusercontent.com";
         
         const AudioSys = {
             ctx: null,
@@ -238,7 +238,6 @@
             }
         };
 
-        // Initialize user interaction for Audio Context
         document.body.addEventListener('click', () => AudioSys.init(), { once: true });
 
         const UI = {
@@ -255,7 +254,6 @@
             settingsModal: document.getElementById('settingsModal'),
             closeSettingsBtn: document.getElementById('closeSettingsBtn'),
             apiKeyInput: document.getElementById('apiKeyInput'),
-            clientIdInput: document.getElementById('clientIdInput'),
             saveSettingsBtn: document.getElementById('saveSettingsBtn'),
             clearHistoryBtn: document.getElementById('clearHistoryBtn'),
             alertBox: document.getElementById('alertBox'),
@@ -280,39 +278,34 @@
             });
         };
 
-        const initGoogleOAuth = () => {
-            const clientId = localStorage.getItem('google_client_id');
-            if (clientId && window.google) {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: clientId,
-                    scope: 'https://www.googleapis.com/auth/calendar.events',
-                    callback: (tokenResponse) => {
-                        googleAccessToken = tokenResponse.access_token;
-                        UI.authGoogleBtn.classList.add('bg-white', 'text-black');
-                        showAlert('G-CAL AUTHENTICATED');
-                    }
-                });
+        // --- DIRECT REDIRECT OAUTH FLOW ---
+        const handleOAuthRedirect = () => {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+            
+            if (accessToken) {
+                googleAccessToken = accessToken;
+                localStorage.setItem('google_access_token', accessToken);
+                UI.authGoogleBtn.classList.add('bg-white', 'text-black');
+                showAlert('G-CAL AUTHENTICATED');
+                history.replaceState(null, null, window.location.pathname);
+            } else if (googleAccessToken) {
+                UI.authGoogleBtn.classList.add('bg-white', 'text-black');
             }
         };
 
         window.onload = () => {
-            setTimeout(initGoogleOAuth, 1000); 
+            handleOAuthRedirect();
             renderHabitGrid();
             renderHistory();
         };
 
         UI.authGoogleBtn.addEventListener('click', () => {
-            if (!localStorage.getItem('google_client_id')) {
-                showAlert('ERR: SET CLIENT ID IN CONFIG');
-                UI.settingsBtn.click();
-                return;
-            }
-            if (tokenClient) {
-                tokenClient.requestAccessToken();
-            } else {
-                initGoogleOAuth();
-                if(tokenClient) tokenClient.requestAccessToken();
-            }
+            const redirectUri = window.location.href.split('#')[0];
+            const scope = 'https://www.googleapis.com/auth/calendar.events';
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${HARDCODED_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
+            window.location.href = authUrl;
         });
 
         const renderHabitGrid = () => {
@@ -385,7 +378,6 @@
 
         UI.settingsBtn.addEventListener('click', () => {
             UI.apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
-            UI.clientIdInput.value = localStorage.getItem('google_client_id') || '';
             UI.settingsModal.classList.remove('hidden');
             UI.settingsModal.style.display = 'flex';
         });
@@ -397,8 +389,6 @@
 
         UI.saveSettingsBtn.addEventListener('click', () => {
             localStorage.setItem('gemini_api_key', UI.apiKeyInput.value.trim());
-            localStorage.setItem('google_client_id', UI.clientIdInput.value.trim());
-            initGoogleOAuth();
             showAlert('CONFIG_SAVED');
             UI.closeSettingsBtn.click();
         });
