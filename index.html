@@ -671,18 +671,21 @@
 
             const payload = {
                 contents: chatHistory,
-                systemInstruction: { parts: [{ text: sysPrompt }] }
+                // CRITICAL FIX: The Google API requires the key to be "system_instruction" with an underscore.
+                system_instruction: { parts: [{ text: sysPrompt }] }
             };
 
             try {
-                // FIXED ENDPOINT: gemini-3.8-flash
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+                // CRITICAL FIX: The correct model endpoint is gemini-1.5-flash.
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) throw new Error("API FAILED");
+                if (!response.ok) {
+                    throw new Error("API FAILED");
+                }
                 
                 const result = await response.json();
                 const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -695,6 +698,11 @@
                     AudioSys.playReceive();
                 }
             } catch (error) {
+                // CRITICAL FIX: Remove the user message from local memory if the API fails.
+                // This prevents sending two "user" blocks in a row, which crashes the API.
+                chatHistory.pop();
+                localStorage.setItem('sbot_history', JSON.stringify(chatHistory));
+                
                 removeTypingIndicator();
                 addMessageToUI("ERR: OFFLINE OR API ERROR.", false);
             }
