@@ -505,7 +505,6 @@
             };
         };
 
-        // --- NEW CONFLICT & SCHEDULING LOGIC ---
         const checkConflicts = async (start, end) => {
             const startIso = new Date(start).toISOString();
             const endIso = new Date(end).toISOString();
@@ -586,7 +585,6 @@
         const pushToGoogleCalendar = async (eventData) => {
             const event = {
                 summary: eventData.title,
-                // Appended exact device timezone to prevent offset errors
                 start: { dateTime: eventData.start, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
                 end: { dateTime: eventData.end, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
             };
@@ -606,7 +604,6 @@
             }
         };
 
-        // --- NEW EVENT DELETION LOGIC ---
         const deleteEventFromCalendar = async (title) => {
             if (!googleAccessToken) {
                 addMessageToUI("> WARN: GOOGLE OAUTH MISSING. CANNOT ACCESS CALENDAR.", false);
@@ -660,7 +657,6 @@
             localStorage.setItem('sbot_history', JSON.stringify(chatHistory));
 
             const dt = new Date();
-            // Instructed the AI to exclude the trailing 'Z' and added 'delete' action rules
             const sysPrompt = `You are S-B0T, a retro terminal AI. Current Date/Time: ${dt.toISOString()}. Local Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}.
             Rules:
             1. Respond concisely. Be robotic but helpful.
@@ -679,8 +675,8 @@
             };
 
             try {
-                // Fixed endpoint to gemini-1.5-flash for reliability
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                // FIXED ENDPOINT: gemini-3.8-flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
