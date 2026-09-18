@@ -12,7 +12,8 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Retro Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -20,16 +21,19 @@
             --safe-area-inset-top: env(safe-area-inset-top, 0px);
         }
         body, html {
-            font-family: 'Inter', sans-serif;
+            /* Applied VT323 retro font */
+            font-family: 'VT323', monospace;
             margin: 0;
             padding: 0;
             height: 100dvh; 
             width: 100vw;
-            background-color: #ffffff; /* Strict B&W */
-            color: #000000;
+            background-color: #000000; /* Strict Black */
+            color: #ffffff; /* Strict White */
             overflow: hidden; 
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: none;
+            /* Boost font size globally since pixel fonts run small */
+            font-size: 22px; 
         }
         
         .chat-scroll-container {
@@ -38,28 +42,26 @@
             overscroll-behavior-y: contain;
         }
         
-        /* Custom Scrollbar for Chat */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #000000; border-radius: 10px; }
+        /* Custom Retro Scrollbar */
+        ::-webkit-scrollbar { width: 8px; border-left: 2px solid #ffffff; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background-color: #ffffff; }
         
         /* Message Entrance Animation */
         .message-enter {
-            animation: slideIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: slideIn 0.2s steps(4, end) forwards;
             opacity: 0;
-            transform: translateY(15px);
+            transform: translateY(10px);
         }
         @keyframes slideIn {
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Typing Indicator Animation */
-        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
+        /* Retro Typing Indicator Animation */
+        .typing-block { animation: blink 1s infinite steps(2, start); }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
         .chat-bubble {
@@ -67,91 +69,87 @@
             overflow-wrap: break-word;
             white-space: pre-wrap;
         }
+        
+        /* Retro hard shadow for distinct elements */
+        .retro-shadow {
+            box-shadow: 4px 4px 0px 0px #ffffff;
+        }
     </style>
 </head>
 
-<body class="flex justify-center bg-white sm:bg-neutral-100">
+<body class="flex justify-center bg-black">
 
     <!-- Mobile container framing -->
-    <div class="w-full max-w-md bg-white h-[100dvh] flex flex-col relative sm:border-x-2 sm:border-black shadow-2xl">
+    <div class="w-full max-w-md bg-black h-[100dvh] flex flex-col relative sm:border-x-2 sm:border-white">
         
         <!-- Header -->
-        <header class="flex-shrink-0 bg-white border-b-2 border-black z-10 flex items-center justify-between px-5 py-4" style="padding-top: max(1rem, var(--safe-area-inset-top));">
+        <header class="flex-shrink-0 bg-black border-b-2 border-white z-10 flex items-center justify-between px-5 py-3" style="padding-top: max(0.75rem, var(--safe-area-inset-top));">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white">
-                    <i class="fa-solid fa-robot text-lg"></i>
+                <div class="w-10 h-10 border-2 border-white flex items-center justify-center bg-black text-white retro-shadow">
+                    <i class="fa-solid fa-robot text-xl"></i>
                 </div>
-                <div class="flex flex-col">
-                    <h1 class="font-extrabold text-[18px] leading-tight tracking-tight text-black">S-B0T</h1>
-                    <p class="text-[11px] text-black font-bold tracking-widest uppercase">Online</p>
+                <div class="flex flex-col leading-none pt-1">
+                    <h1 class="text-3xl uppercase tracking-widest m-0 p-0 leading-none">S-B0T</h1>
+                    <p class="text-lg tracking-[0.2em] uppercase m-0 p-0 leading-none">Online_</p>
                 </div>
             </div>
-            <button id="settingsBtn" class="w-10 h-10 rounded-full border-2 border-transparent hover:border-black active:bg-black active:text-white flex items-center justify-center text-black transition-all">
+            <button id="settingsBtn" class="w-10 h-10 border-2 border-white hover:bg-white hover:text-black active:bg-gray-300 flex items-center justify-center text-white transition-colors retro-shadow">
                 <i class="fa-solid fa-gear text-xl"></i>
             </button>
         </header>
 
-        <!-- Chat Container -->
-        <main id="chatContainer" class="flex-1 chat-scroll-container p-4 flex flex-col gap-5 pb-6">
-            <!-- Initial Greeting -->
-            <div class="flex flex-col items-center justify-center mt-10 mb-6 text-black">
-                <div class="w-20 h-20 border-4 border-black rounded-full flex items-center justify-center mb-4">
-                    <i class="fa-solid fa-bolt text-3xl"></i>
-                </div>
-                <h2 class="font-extrabold text-2xl mb-2">SYSTEM READY</h2>
-                <p class="text-[14px] text-center px-4 max-w-xs font-semibold">
-                    Log your day, or ask me to schedule an event.
-                </p>
-            </div>
+        <!-- Chat Container (Starts Clean) -->
+        <main id="chatContainer" class="flex-1 chat-scroll-container p-4 flex flex-col gap-6 pb-6">
+            <!-- No default greeting block per requirements -->
         </main>
 
         <!-- Input Footer -->
-        <footer class="flex-shrink-0 bg-white border-t-2 border-black z-10" style="padding-bottom: max(0.5rem, var(--safe-area-inset-bottom));">
+        <footer class="flex-shrink-0 bg-black border-t-2 border-white z-10" style="padding-bottom: max(0.5rem, var(--safe-area-inset-bottom));">
             <form id="chatForm" class="p-3 flex items-end gap-3">
-                <div class="flex-1 bg-white rounded-full border-2 border-black focus-within:ring-2 focus-within:ring-black focus-within:ring-offset-1 transition-all flex items-center px-4">
-                    <textarea id="messageInput" rows="1" class="w-full bg-transparent resize-none outline-none py-3 max-h-[120px] text-[15px] font-medium text-black placeholder-black placeholder-opacity-50" placeholder="Message S-B0T..." required></textarea>
+                <div class="flex-1 bg-black border-2 border-white flex items-center px-3 retro-shadow focus-within:bg-gray-900 transition-colors">
+                    <textarea id="messageInput" rows="1" class="w-full bg-transparent resize-none outline-none py-3 max-h-[120px] text-2xl text-white placeholder-gray-400" placeholder="> Input command..." required></textarea>
                 </div>
-                <button type="submit" id="sendBtn" class="w-[50px] h-[50px] bg-black rounded-full flex-shrink-0 flex items-center justify-center text-white hover:opacity-80 active:scale-95 transition-all disabled:opacity-30 disabled:active:scale-100">
-                    <i class="fa-solid fa-paper-plane text-lg"></i>
+                <button type="submit" id="sendBtn" class="w-[54px] h-[54px] bg-black border-2 border-white retro-shadow flex-shrink-0 flex items-center justify-center text-white hover:bg-white hover:text-black active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 disabled:active:translate-y-0 disabled:active:translate-x-0 disabled:active:shadow-[4px_4px_0px_0px_#ffffff]">
+                    <i class="fa-solid fa-paper-plane text-xl"></i>
                 </button>
             </form>
         </footer>
 
-        <!-- Settings Modal (Strict B&W) -->
-        <div id="settingsModal" class="fixed inset-0 bg-black/60 z-50 hidden flex-col justify-end items-center backdrop-blur-sm transition-opacity opacity-0 duration-300">
-            <div class="bg-white w-full max-w-md border-t-2 border-black sm:border-2 sm:rounded-2xl sm:mb-10 rounded-t-3xl p-6 pb-8 transform transition-transform translate-y-full duration-300" id="settingsContent" style="padding-bottom: max(2rem, var(--safe-area-inset-bottom));">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-extrabold text-black uppercase tracking-tight">Configuration</h2>
-                    <button id="closeSettingsBtn" class="text-black hover:bg-black hover:text-white w-10 h-10 border-2 border-black flex items-center justify-center rounded-full transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="fixed inset-0 bg-black/90 z-50 hidden flex-col justify-center items-center p-4 transition-opacity opacity-0 duration-200">
+            <div class="bg-black w-full max-w-sm border-2 border-white p-6 retro-shadow transform transition-transform scale-95 duration-200" id="settingsContent">
+                <div class="flex justify-between items-center mb-6 border-b-2 border-white pb-3">
+                    <h2 class="text-3xl uppercase tracking-widest">> CONFIG</h2>
+                    <button id="closeSettingsBtn" class="text-white hover:bg-white hover:text-black w-8 h-8 border-2 border-white flex items-center justify-center transition-colors">
+                        <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
                 
                 <div class="space-y-6">
                     <div>
-                        <label class="block text-sm font-bold text-black mb-2 uppercase tracking-wide">Gemini API Key</label>
-                        <input type="password" id="apiKeyInput" class="w-full border-2 border-black rounded-xl px-4 py-4 outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 text-[15px] font-medium" placeholder="AIzaSy...">
-                        <p class="text-[13px] text-black font-semibold mt-3">Stored securely on your device. Required to power the AI.</p>
+                        <label class="block text-xl text-white mb-2 uppercase tracking-widest">Gemini API Key</label>
+                        <input type="password" id="apiKeyInput" class="w-full bg-black border-2 border-white px-3 py-3 outline-none focus:bg-gray-900 text-2xl" placeholder="AIzaSy...">
+                        <p class="text-lg text-gray-400 mt-2 leading-tight">Stored locally. Required for AI processing.</p>
                     </div>
                     
-                    <button id="saveSettingsBtn" class="w-full bg-black text-white font-bold uppercase text-[15px] py-4 rounded-xl border-2 border-black hover:bg-white hover:text-black active:scale-[0.98] transition-all tracking-wider">
-                        Save System Key
+                    <button id="saveSettingsBtn" class="w-full bg-black text-white uppercase text-2xl py-3 border-2 border-white retro-shadow hover:bg-white hover:text-black active:translate-y-1 active:translate-x-1 active:shadow-none transition-all tracking-widest">
+                        SAVE_KEY
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Custom Toast Alert (Black & White) -->
-        <div id="alertBox" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-4 rounded-2xl shadow-xl z-[100] transition-all duration-300 opacity-0 -translate-y-[150%] pointer-events-none flex items-center gap-3 border-2 border-white w-max max-w-[90vw]">
-            <i class="fa-solid fa-circle-exclamation text-lg"></i>
-            <span id="alertMessage" class="text-[15px] font-bold"></span>
+        <!-- Custom Toast Alert -->
+        <div id="alertBox" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-5 py-3 border-2 border-white retro-shadow z-[100] transition-all duration-200 opacity-0 -translate-y-[150%] pointer-events-none flex items-center gap-3 w-max max-w-[90vw]">
+            <i class="fa-solid fa-circle-exclamation text-xl"></i>
+            <span id="alertMessage" class="text-2xl uppercase tracking-wide"></span>
         </div>
     </div>
 
     <script>
         // PWA Setup with Base64 SVG Icon (Black background, white text)
         const setupPWA = () => {
-            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" fill="black"/><text x="256" y="270" font-family="sans-serif" font-size="120" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">S-B0T</text></svg>`;
+            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" fill="black"/><text x="256" y="270" font-family="monospace" font-size="120" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">S-B0T</text></svg>`;
             const base64Icon = `data:image/svg+xml;base64,${btoa(svgIcon)}`;
             
             const manifest = {
@@ -159,8 +157,8 @@
                 short_name: "S-B0T",
                 start_url: ".",
                 display: "standalone",
-                background_color: "#ffffff",
-                theme_color: "#ffffff",
+                background_color: "#000000",
+                theme_color: "#000000",
                 icons: [{ src: base64Icon, sizes: "512x512", type: "image/svg+xml" }]
             };
             const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
@@ -222,16 +220,18 @@
             if (show) {
                 UI.settingsModal.classList.remove('hidden');
                 UI.settingsModal.style.display = 'flex';
-                void UI.settingsModal.offsetWidth; // Trigger reflow
+                void UI.settingsModal.offsetWidth;
                 UI.settingsModal.classList.remove('opacity-0');
-                UI.settingsContent.classList.remove('translate-y-full');
+                UI.settingsContent.classList.remove('scale-95');
+                UI.settingsContent.classList.add('scale-100');
             } else {
                 UI.settingsModal.classList.add('opacity-0');
-                UI.settingsContent.classList.add('translate-y-full');
+                UI.settingsContent.classList.remove('scale-100');
+                UI.settingsContent.classList.add('scale-95');
                 setTimeout(() => {
                     UI.settingsModal.classList.add('hidden');
                     UI.settingsModal.style.display = 'none';
-                }, 300);
+                }, 200);
             }
         };
 
@@ -249,10 +249,10 @@
             const key = UI.apiKeyInput.value.trim();
             if (key) {
                 localStorage.setItem('gemini_api_key', key);
-                showAlert('API Key saved successfully.');
+                showAlert('KEY_SAVED');
                 toggleSettings(false);
             } else {
-                showAlert('Please enter a valid key.');
+                showAlert('ERR: INVALID_KEY');
             }
         });
 
@@ -262,19 +262,19 @@
             
             const bubble = document.createElement('div');
             
-            // Applying strict B&W theme and specific border radii based on sender
+            // Strict retro black & white styling (Square borders, no rounding)
             if (isUser) {
-                // User: Black background, white text, sharp bottom right
-                bubble.className = `chat-bubble max-w-[85%] sm:max-w-[75%] px-5 py-3 text-[15px] font-medium leading-[1.5] w-fit bg-black text-white rounded-[24px] rounded-br-[4px] shadow-md`;
+                // User: Right aligned, white border, retro shadow
+                bubble.className = `chat-bubble max-w-[85%] sm:max-w-[75%] px-4 py-2 text-2xl leading-[1.2] w-fit bg-black text-white border-2 border-white retro-shadow`;
             } else {
-                // Bot: White background, black text, black border, sharp bottom left
-                bubble.className = `chat-bubble max-w-[85%] sm:max-w-[75%] px-5 py-3 text-[15px] font-medium leading-[1.5] w-fit bg-white text-black border-2 border-black rounded-[24px] rounded-bl-[4px] shadow-[4px_4px_0px_rgba(0,0,0,1)]`;
+                // Bot: Left aligned, dashed white border to distinguish from user
+                bubble.className = `chat-bubble max-w-[85%] sm:max-w-[75%] px-4 py-2 text-2xl leading-[1.2] w-fit bg-black text-white border-2 border-white border-dashed`;
             }
             
             let formattedText = text;
             if (!isUser) {
-                // Simple bold markdown parsing
-                formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-extrabold">$1</strong>');
+                // Simple bold markdown parsing -> map to underline/brackets for retro feel
+                formattedText = text.replace(/\*\*(.*?)\*\*/g, '<span class="underline">$1</span>');
             }
             
             bubble.innerHTML = formattedText;
@@ -289,15 +289,12 @@
             wrapper.id = 'typingIndicator';
             wrapper.className = `flex w-full message-enter justify-start`;
             
-            // Bot styling for indicator
             const bubble = document.createElement('div');
-            bubble.className = `px-5 py-4 bg-white border-2 border-black rounded-[24px] rounded-bl-[4px] shadow-[4px_4px_0px_rgba(0,0,0,1)] flex items-center space-x-2 w-fit`;
+            bubble.className = `px-4 py-3 bg-black border-2 border-white border-dashed flex items-center space-x-2 w-fit`;
             
-            for(let i=0; i<3; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'w-2 h-2 bg-black rounded-full typing-dot';
-                bubble.appendChild(dot);
-            }
+            const block = document.createElement('div');
+            block.className = 'w-3 h-5 bg-white typing-block';
+            bubble.appendChild(block);
             
             wrapper.appendChild(bubble);
             UI.chatContainer.appendChild(wrapper);
@@ -326,31 +323,30 @@
 
         const renderEventCard = (event) => {
             const card = document.createElement('div');
-            card.className = 'flex w-full message-enter justify-start mt-2';
+            card.className = 'flex w-full message-enter justify-start mt-1 mb-2';
             
             const startDate = new Date(event.StartTime);
             const endDate = new Date(event.EndTime);
             
-            const timeString = `${startDate.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})} - ${endDate.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}`;
-            const dateString = startDate.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric'});
+            const timeString = `${startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})} - ${endDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}`;
+            const dateString = startDate.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric'}).toUpperCase();
             const calUrl = createGoogleCalendarLink(event);
 
-            // Strict B&W Calendar Card
+            // Retro Event Card
             card.innerHTML = `
-                <div class="max-w-[85%] sm:max-w-[75%] bg-white border-2 border-black rounded-2xl p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)] w-full relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-2 h-full bg-black"></div>
-                    <div class="flex items-start gap-4 pl-2">
-                        <div class="w-12 h-12 border-2 border-black rounded-xl flex items-center justify-center flex-shrink-0 bg-white">
-                            <i class="fa-solid fa-calendar-plus text-xl text-black"></i>
+                <div class="max-w-[85%] sm:max-w-[75%] bg-black border-2 border-white p-4 retro-shadow w-full">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 border-2 border-white flex items-center justify-center flex-shrink-0 bg-white text-black">
+                            <i class="fa-regular fa-calendar-plus text-2xl"></i>
                         </div>
-                        <div class="flex-1 min-w-0 pt-0.5">
-                            <h4 class="font-extrabold text-black text-[16px] truncate leading-tight">${event.EventName}</h4>
-                            <p class="text-[13px] font-bold text-black mt-1"><i class="fa-regular fa-clock mr-1.5"></i>${dateString}</p>
-                            <p class="text-[12px] font-semibold text-black mt-0.5 ml-4">${timeString}</p>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-2xl text-white truncate leading-none uppercase mb-2">${event.EventName}</h4>
+                            <p class="text-xl text-white leading-none mb-1">> DATE: ${dateString}</p>
+                            <p class="text-xl text-white leading-none">> TIME: ${timeString}</p>
                         </div>
                     </div>
-                    <a href="${calUrl}" target="_blank" class="mt-4 flex items-center justify-center gap-2 bg-black text-white border-2 border-black text-[14px] font-bold uppercase tracking-wider px-4 py-3 rounded-xl active:bg-white active:text-black transition-all w-full text-center">
-                        Add to Calendar <i class="fa-solid fa-arrow-up-right-from-square text-[13px]"></i>
+                    <a href="${calUrl}" target="_blank" class="mt-4 flex items-center justify-center gap-2 bg-black text-white border-2 border-white text-xl uppercase tracking-widest px-4 py-2 hover:bg-white hover:text-black active:bg-gray-300 transition-colors w-full text-center">
+                        [ ADD_TO_CALENDAR ]
                     </a>
                 </div>
             `;
@@ -362,7 +358,7 @@
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
                 removeTypingIndicator();
-                showAlert("SYSTEM ERROR: API Key Missing.");
+                showAlert("ERR: API_KEY_MISSING");
                 toggleSettings(true);
                 return;
             }
@@ -370,9 +366,12 @@
             chatHistory.push({ role: "user", parts: [{ text: userText }] });
 
             const currentDateTime = new Date().toLocaleString();
+            
+            // Explicitly instructing AI regarding event cancellations
             const systemPrompt = `You are S-B0T, a concise, highly efficient AI personal assistant. Current Date/Time context: ${currentDateTime}.
-            1. Respond clearly and concisely to the user.
-            2. IF the user asks to schedule something, add an event to their calendar, or set a time block, you MUST append a JSON block at the very end of your message formatted EXACTLY like this:
+            1. Respond clearly and concisely to the user in a robotic/terminal-style tone.
+            2. CRITICAL LIMITATION: You CANNOT cancel, delete, modify, or view existing events on the user's calendar. You only possess the ability to CREATE new events. If the user asks you to cancel, modify, or delete an event, you MUST politely explain that you lack read/delete permissions and that they must do it manually.
+            3. IF the user asks to schedule something or create a new event, you MUST append a JSON block at the very end of your message formatted EXACTLY like this:
             \`\`\`json
             {
               "schedule": [
@@ -408,13 +407,12 @@
 
             } catch (error) {
                 removeTypingIndicator();
-                addMessageToUI("SYSTEM ERROR: Connection failed. Verify your API key.", false);
+                addMessageToUI("ERR: CONNECTION_FAILED. Verify API key.", false);
             }
         };
 
         const processAIResponse = (rawText) => {
             removeTypingIndicator();
-            // Regex to find the JSON block inside markdown formatting
             const jsonRegex = /```json\n([\s\S]*?)\n```/;
             const match = rawText.match(jsonRegex);
             
@@ -422,7 +420,6 @@
             let extractedEvents = null;
 
             if (match && match[1]) {
-                // Remove the JSON block from the text shown to the user
                 displayString = rawText.replace(jsonRegex, '').trim();
                 try {
                     const parsed = JSON.parse(match[1]);
@@ -459,7 +456,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             UI.sendBtn.disabled = true;
             if (!localStorage.getItem('gemini_api_key')) {
-                setTimeout(() => showAlert("System initialized. Please insert API Key."), 800);
+                setTimeout(() => showAlert("SYS: INSERT_API_KEY"), 500);
             }
         });
     </script>
